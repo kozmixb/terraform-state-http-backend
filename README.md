@@ -1,5 +1,10 @@
 # Terraform State: http-backend
 
+A Fast, Minimal terraform state backend server.
+An easy centralised solution for homelabs
+
+Dockerhub :[image](https://hub.docker.com/r/bencejob/terraform-state-http-backend)
+
 ## Usage
 
 ### Run with go
@@ -9,8 +14,7 @@ go run main.go
 
 ### Run with docker
 ```shell
-docker build -t 'terraform-state-http-backend' .
-docker run --rm -it --name 'terraform-state-http-backend' -v ${pwd}/storage:/storage -p 8080:8080  terraform-state-http-backend
+docker run --rm -it --name 'bencejob/terraform-state-http-backend' -v ${pwd}/storage:/storage -p 8080:8080  bencejob/terraform-state-http-backend
 ```
 
 Terraform http backend documentation: [docs](https://developer.hashicorp.com/terraform/language/settings/backends/http)
@@ -27,4 +31,17 @@ terraform {
     unlock_method   = "DELETE"
   }
 }
+```
+
+## Build
+
+Build on local machine
+```shell
+docker build -t 'bencejob/terraform-state-http-backend' .
+```
+
+Build for multiple platforms
+```shell
+docker buildx create --use --name mybuild
+docker buildx build --platform linux/386,linux/amd64,linux/arm64 --tag 'bencejob/terraform-state-http-backend' .
 ```
