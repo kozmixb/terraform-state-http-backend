@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  app:
+    container_name: air
+    image: cosmtrek/air:latest
+    ports:
+      - "8080:8080"
+    working_dir: /app
+    volumes:
+      - .:/app
