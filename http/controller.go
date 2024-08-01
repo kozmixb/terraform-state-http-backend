@@ -49,7 +49,10 @@ func toJson(data string, c echo.Context) error {
 	err := json.Unmarshal([]byte(data), &response)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"error":     data,
+			"technical": err.Error(),
+		})
 	}
 
 	return c.JSON(http.StatusOK, response)

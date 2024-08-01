@@ -48,7 +48,7 @@ func getDefault() string {
 	driver := os.Getenv("DRIVER")
 
 	if driver == "" {
-		return "sqlite"
+		return "file"
 	}
 
 	return driver
