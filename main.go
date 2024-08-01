@@ -11,7 +11,9 @@ import (
 
 func main() {
 	e := echo.New()
-	e.Use(middleware.Logger())
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: "${method} ${uri}, (${latency_human})\n",
+	}))
 
 	routes.Load(e)
 
