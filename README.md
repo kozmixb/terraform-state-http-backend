@@ -33,6 +33,15 @@ terraform {
 }
 ```
 
+Optional environment variables:
+
+| Name | Default | Description |
+| --- | --- | --- |
+| `HTTP_PORT` | `8080` | Port the HTTP server listens on. |
+| `DRIVER` | `file` | Storage driver. Supported values: `file`, `sqlite`. |
+| `BASIC_AUTH_USERNAME` | unset | Enables HTTP basic auth when set with `BASIC_AUTH_PASSWORD`. |
+| `BASIC_AUTH_PASSWORD` | unset | Enables HTTP basic auth when set with `BASIC_AUTH_USERNAME`. |
+
 ## Build
 
 Build on local machine
