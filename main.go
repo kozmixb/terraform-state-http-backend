@@ -14,6 +14,7 @@ func main() {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: "${method} ${uri}, (${latency_human})\n",
 	}))
+	useBasicAuth(e)
 
 	routes.Load(e)
 
@@ -28,4 +29,16 @@ func getPort() string {
 	}
 
 	return fmt.Sprintf(":%s", port)
+}
+
+func useBasicAuth(e *echo.Echo) {
+	username := os.Getenv("BASIC_AUTH_USERNAME")
+	password := os.Getenv("BASIC_AUTH_PASSWORD")
+	if username == "" || password == "" {
+		return
+	}
+
+	e.Use(middleware.BasicAuth(func(inputUsername string, inputPassword string, c echo.Context) (bool, error) {
+		return inputUsername == username && inputPassword == password, nil
+	}))
 }
