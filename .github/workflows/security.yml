@@ -2,7 +2,21 @@ name: Security
 
 on:
   push:
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/security.yml"
   pull_request:
+    paths:
+      - "**.go"
+      - "go.mod"
+      - "go.sum"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/security.yml"
   workflow_dispatch:
   schedule:
     - cron: "0 6 * * 1"
