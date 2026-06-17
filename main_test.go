@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/labstack/echo/v4"
 )
 
 func TestGetPortUsesDefaultPort(t *testing.T) {
@@ -55,18 +53,18 @@ func TestUseBasicAuthAcceptsConfiguredCredentials(t *testing.T) {
 }
 
 func serveWithBasicAuth(username string, password string) *httptest.ResponseRecorder {
-	e := echo.New()
-	useBasicAuth(e)
-	e.GET("/health", func(c echo.Context) error {
-		return c.NoContent(http.StatusOK)
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
 	})
+	handler := useBasicAuth(mux)
 
 	request := httptest.NewRequest(http.MethodGet, "/health", nil)
 	if username != "" || password != "" {
 		request.SetBasicAuth(username, password)
 	}
 	response := httptest.NewRecorder()
-	e.ServeHTTP(response, request)
+	handler.ServeHTTP(response, request)
 
 	return response
 }

@@ -2,16 +2,14 @@ package drivers
 
 import (
 	"errors"
-	"os/exec"
-	"strings"
 	"testing"
 )
 
 func TestSqLiteDriverStoresQuotedPayload(t *testing.T) {
-	skipWithoutCGO(t)
 	t.Chdir(t.TempDir())
 
 	driver := NewSqLiteDriver()
+	defer driver.db.Close()
 	payload := []byte(`{"outputs":{"quote":"it's ok"}}`)
 
 	result, err := driver.Update("group", "key", payload)
@@ -32,10 +30,10 @@ func TestSqLiteDriverStoresQuotedPayload(t *testing.T) {
 }
 
 func TestSqLiteDriverLockConflict(t *testing.T) {
-	skipWithoutCGO(t)
 	t.Chdir(t.TempDir())
 
 	driver := NewSqLiteDriver()
+	defer driver.db.Close()
 	firstLock := []byte(`{"ID":"first"}`)
 	secondLock := []byte(`{"ID":"second"}`)
 
@@ -59,17 +57,5 @@ func TestSqLiteDriverLockConflict(t *testing.T) {
 	}
 	if _, err := driver.Lock("group", "key", secondLock); err != nil {
 		t.Fatal(err)
-	}
-}
-
-func skipWithoutCGO(t *testing.T) {
-	t.Helper()
-
-	output, err := exec.Command("go", "env", "CGO_ENABLED").Output()
-	if err != nil {
-		t.Skipf("could not determine CGO support: %v", err)
-	}
-	if strings.TrimSpace(string(output)) == "0" {
-		t.Skip("go-sqlite3 requires CGO")
 	}
 }

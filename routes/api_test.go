@@ -1,32 +1,36 @@
 package routes
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
-
-	"github.com/labstack/echo/v4"
 )
 
 func TestLoadRegistersTerraformBackendRoutes(t *testing.T) {
-	e := echo.New()
-	Load(e)
+	mux := http.NewServeMux()
+	Load(mux)
 
-	expected := map[string]bool{
-		"GET /:group/:key":    false,
-		"POST /:group/:key":   false,
-		"PUT /:group/:key":    false,
-		"DELETE /:group/:key": false,
+	tests := []struct {
+		method string
+		status int
+	}{
+		{method: http.MethodGet, status: http.StatusNotFound},
+		{method: http.MethodPost, status: http.StatusOK},
+		{method: http.MethodPut, status: http.StatusOK},
+		{method: http.MethodDelete, status: http.StatusOK},
 	}
 
-	for _, route := range e.Routes() {
-		key := route.Method + " " + route.Path
-		if _, ok := expected[key]; ok {
-			expected[key] = true
-		}
-	}
+	t.Setenv("DRIVER", "file")
+	t.Chdir(t.TempDir())
 
-	for route, found := range expected {
-		if !found {
-			t.Fatalf("expected route %s to be registered", route)
+	for _, test := range tests {
+		request := httptest.NewRequest(test.method, "/group/key", nil)
+		response := httptest.NewRecorder()
+
+		mux.ServeHTTP(response, request)
+
+		if response.Code != test.status {
+			t.Fatalf("expected %s status %d, got %d", test.method, test.status, response.Code)
 		}
 	}
 }

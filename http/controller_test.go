@@ -1,11 +1,10 @@
 package http
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/labstack/echo/v4"
 )
 
 func TestStateRoundTripPreservesPayload(t *testing.T) {
@@ -14,10 +13,8 @@ func TestStateRoundTripPreservesPayload(t *testing.T) {
 
 	payload := `{"version":4,"serial":1,"outputs":{"quote":"it's ok"}}`
 
-	update := requestContext(echo.POST, "/group/key", "group", "key", payload)
-	if err := Update(update.context); err != nil {
-		t.Fatal(err)
-	}
+	update := requestContext(http.MethodPost, "/group/key", "group", "key", payload)
+	Update(update.response, update.request)
 	if update.response.Code != 200 {
 		t.Fatalf("expected status 200, got %d", update.response.Code)
 	}
@@ -25,10 +22,8 @@ func TestStateRoundTripPreservesPayload(t *testing.T) {
 		t.Fatalf("expected update body %q, got %q", payload, update.response.Body.String())
 	}
 
-	show := requestContext(echo.GET, "/group/key", "group", "key", "")
-	if err := Show(show.context); err != nil {
-		t.Fatal(err)
-	}
+	show := requestContext(http.MethodGet, "/group/key", "group", "key", "")
+	Show(show.response, show.request)
 	if show.response.Code != 200 {
 		t.Fatalf("expected status 200, got %d", show.response.Code)
 	}
@@ -41,10 +36,8 @@ func TestShowMissingStateReturnsNotFound(t *testing.T) {
 	t.Setenv("DRIVER", "file")
 	t.Chdir(t.TempDir())
 
-	show := requestContext(echo.GET, "/group/missing", "group", "missing", "")
-	if err := Show(show.context); err != nil {
-		t.Fatal(err)
-	}
+	show := requestContext(http.MethodGet, "/group/missing", "group", "missing", "")
+	Show(show.response, show.request)
 	if show.response.Code != 404 {
 		t.Fatalf("expected status 404, got %d", show.response.Code)
 	}
@@ -57,18 +50,14 @@ func TestLockConflictAndUnlock(t *testing.T) {
 	firstLock := `{"ID":"first"}`
 	secondLock := `{"ID":"second"}`
 
-	lock := requestContext(echo.PUT, "/group/key", "group", "key", firstLock)
-	if err := Lock(lock.context); err != nil {
-		t.Fatal(err)
-	}
+	lock := requestContext(http.MethodPut, "/group/key", "group", "key", firstLock)
+	Lock(lock.response, lock.request)
 	if lock.response.Code != 200 {
 		t.Fatalf("expected first lock status 200, got %d", lock.response.Code)
 	}
 
-	conflict := requestContext(echo.PUT, "/group/key", "group", "key", secondLock)
-	if err := Lock(conflict.context); err != nil {
-		t.Fatal(err)
-	}
+	conflict := requestContext(http.MethodPut, "/group/key", "group", "key", secondLock)
+	Lock(conflict.response, conflict.request)
 	if conflict.response.Code != 423 {
 		t.Fatalf("expected lock conflict status 423, got %d", conflict.response.Code)
 	}
@@ -76,47 +65,39 @@ func TestLockConflictAndUnlock(t *testing.T) {
 		t.Fatalf("expected current lock body %q, got %q", firstLock, conflict.response.Body.String())
 	}
 
-	wrongUnlock := requestContext(echo.DELETE, "/group/key", "group", "key", secondLock)
-	if err := Unlock(wrongUnlock.context); err != nil {
-		t.Fatal(err)
-	}
+	wrongUnlock := requestContext(http.MethodDelete, "/group/key", "group", "key", secondLock)
+	Unlock(wrongUnlock.response, wrongUnlock.request)
 	if wrongUnlock.response.Code != 409 {
 		t.Fatalf("expected wrong unlock status 409, got %d", wrongUnlock.response.Code)
 	}
 
-	unlock := requestContext(echo.DELETE, "/group/key", "group", "key", firstLock)
-	if err := Unlock(unlock.context); err != nil {
-		t.Fatal(err)
-	}
+	unlock := requestContext(http.MethodDelete, "/group/key", "group", "key", firstLock)
+	Unlock(unlock.response, unlock.request)
 	if unlock.response.Code != 200 {
 		t.Fatalf("expected unlock status 200, got %d", unlock.response.Code)
 	}
 
-	relock := requestContext(echo.PUT, "/group/key", "group", "key", secondLock)
-	if err := Lock(relock.context); err != nil {
-		t.Fatal(err)
-	}
+	relock := requestContext(http.MethodPut, "/group/key", "group", "key", secondLock)
+	Lock(relock.response, relock.request)
 	if relock.response.Code != 200 {
 		t.Fatalf("expected relock status 200, got %d", relock.response.Code)
 	}
 }
 
 type handlerContext struct {
-	context  echo.Context
+	request  *http.Request
 	response *httptest.ResponseRecorder
 }
 
 func requestContext(method string, target string, group string, key string, body string) handlerContext {
-	e := echo.New()
 	request := httptest.NewRequest(method, target, strings.NewReader(body))
-	request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	request.Header.Set("Content-Type", "application/json")
+	request.SetPathValue("group", group)
+	request.SetPathValue("key", key)
 	response := httptest.NewRecorder()
-	context := e.NewContext(request, response)
-	context.SetParamNames("group", "key")
-	context.SetParamValues(group, key)
 
 	return handlerContext{
-		context:  context,
+		request:  request,
 		response: response,
 	}
 }

@@ -14,6 +14,7 @@ Docker Hub: [bencejob/terraform-state-http-backend](https://hub.docker.com/r/ben
 - Optional SQLite storage
 - Optional HTTP Basic Auth
 - Small Docker image
+- Minimal scratch-based Docker runtime
 - Non-root container runtime user
 - Multi-architecture Docker release workflow
 - Automated Go tests in GitHub Actions
@@ -179,7 +180,7 @@ Common responses:
 
 Requirements:
 
-- Go `1.26.0`
+- Go `1.26.4`
 - Docker, if building or testing the container image
 
 Run locally:

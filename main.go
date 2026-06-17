@@ -2,23 +2,21 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 	"terraform-state-http-backend/routes"
-
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"time"
 )
 
 func main() {
-	e := echo.New()
-	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: "${method} ${uri}, (${latency_human})\n",
-	}))
-	useBasicAuth(e)
+	mux := http.NewServeMux()
+	routes.Load(mux)
 
-	routes.Load(e)
+	handler := useBasicAuth(mux)
+	handler = logRequests(handler)
 
-	e.Logger.Fatal(e.Start(getPort()))
+	log.Fatal(http.ListenAndServe(getPort(), handler))
 }
 
 func getPort() string {
@@ -31,14 +29,29 @@ func getPort() string {
 	return fmt.Sprintf(":%s", port)
 }
 
-func useBasicAuth(e *echo.Echo) {
+func useBasicAuth(next http.Handler) http.Handler {
 	username := os.Getenv("BASIC_AUTH_USERNAME")
 	password := os.Getenv("BASIC_AUTH_PASSWORD")
 	if username == "" || password == "" {
-		return
+		return next
 	}
 
-	e.Use(middleware.BasicAuth(func(inputUsername string, inputPassword string, c echo.Context) (bool, error) {
-		return inputUsername == username && inputPassword == password, nil
-	}))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		inputUsername, inputPassword, ok := r.BasicAuth()
+		if !ok || inputUsername != username || inputPassword != password {
+			w.Header().Set("WWW-Authenticate", `Basic realm="terraform-state-http-backend"`)
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func logRequests(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		log.Printf("%s %s, (%s)", r.Method, r.URL.RequestURI(), time.Since(start))
+	})
 }

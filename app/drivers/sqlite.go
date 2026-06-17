@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type SqLiteDriver struct {
@@ -17,7 +17,7 @@ func NewSqLiteDriver() *SqLiteDriver {
 		log.Panicf("Failed to create sqlite storage directory: %v", err)
 	}
 
-	db, err := sql.Open("sqlite3", "storage/database.db")
+	db, err := sql.Open("sqlite", "storage/database.db")
 	if err != nil {
 		log.Panicf("Failed to open sqlite database: %v", err)
 	}
