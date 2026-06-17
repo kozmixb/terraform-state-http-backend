@@ -1,7 +1,5 @@
-# If you prefer the allow list template instead of the deny list, see community template:
-# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
-#
-# Binaries for programs and plugins
+# Binaries
+/terraform-state-http-backend
 *.exe
 *.exe~
 *.dll
@@ -10,17 +8,29 @@
 
 # Test binary, built with `go test -c`
 *.test
-tmp
+/tmp/
 
-# Output of the go coverage tool, specifically when used with LiteIDE
+# Coverage and test output
 *.out
+coverage.*
+coverage/
 
-# Dependency directories (remove the comment below to include it)
+# Dependencies
 # vendor/
 
-# Go workspace file
+# Go workspace
 go.work
+go.work.sum
 
-# Editors
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Runtime storage is ignored by storage/.gitignore.
+
+# Editors and OS files
 /.idea
 /.vscode
+.DS_Store
+Thumbs.db
