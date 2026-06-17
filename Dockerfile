@@ -1,5 +1,5 @@
 ########## BUILDER ##########
-FROM golang:1.22-alpine3.21 AS builder
+FROM golang:1.26-alpine3.23 AS builder
 
 WORKDIR /src
 RUN apk add --no-cache build-base
@@ -16,7 +16,7 @@ COPY . .
 RUN CGO_ENABLED=1 go build -tags "sqlite_omit_load_extension" -ldflags="-linkmode external -extldflags '-static' -s -w" -v -o /tmp/terraform-state-http-backend
 
 ########## RESULT ##########
-FROM alpine:3.21
+FROM alpine:3.23
 
 COPY --from=builder /tmp/terraform-state-http-backend /app
 
