@@ -13,12 +13,12 @@ COPY . .
 
 # Build statically linked file and strip debug information.
 # CGO is required by github.com/mattn/go-sqlite3.
-RUN CGO_ENABLED=1 go build -tags "sqlite_omit_load_extension" -ldflags="-linkmode external -extldflags '-static' -s -w" -v -o app
+RUN CGO_ENABLED=1 go build -tags "sqlite_omit_load_extension" -ldflags="-linkmode external -extldflags '-static' -s -w" -v -o /tmp/terraform-state-http-backend
 
 ########## RESULT ##########
 FROM alpine:latest
 
-COPY --from=builder /src/app /app
+COPY --from=builder /tmp/terraform-state-http-backend /app
 
 VOLUME [ "/storage" ]
 EXPOSE 8080
