@@ -1,5 +1,5 @@
 ########## BUILDER ##########
-FROM golang:1.22-alpine AS builder
+FROM golang:1.22-alpine3.21 AS builder
 
 WORKDIR /src
 RUN apk add --no-cache build-base
@@ -16,11 +16,19 @@ COPY . .
 RUN CGO_ENABLED=1 go build -tags "sqlite_omit_load_extension" -ldflags="-linkmode external -extldflags '-static' -s -w" -v -o /tmp/terraform-state-http-backend
 
 ########## RESULT ##########
-FROM alpine:latest
+FROM alpine:3.21
 
 COPY --from=builder /tmp/terraform-state-http-backend /app
+
+RUN addgroup -S app \
+	&& adduser -S -D -H -h /nonexistent -s /sbin/nologin -G app app \
+	&& mkdir -p /storage \
+	&& chown app:app /storage \
+	&& chmod 0750 /storage
 
 VOLUME [ "/storage" ]
 EXPOSE 8080
 
-ENTRYPOINT  ["/app"]
+USER app:app
+
+ENTRYPOINT ["/app"]

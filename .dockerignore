@@ -1,2 +1,8 @@
 *.exe
-/storage
+*.test
+.git
+.github
+.idea
+.vscode
+storage
+tmp
